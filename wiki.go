@@ -91,9 +91,9 @@ func main() {
 	page2, _ := loadPage("TestPage")
 	fmt.Println(string(page2.Body))
 
-	/*http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "Hi! I love %s!", r.URL.Path[1:])
-	})*/
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/view/"+title, http.StatusFound)
+	})
 
 	http.HandleFunc("/view/", makeHandler(viewHandler))
 	http.HandleFunc("/edit/", makeHandler(editHandler))
