@@ -10,14 +10,18 @@ import (
 )
 
 var templates = template.Must(template.ParseFiles("view.html", "edit.html"))
-var validPath = regexp.MustCompile("^/(edit|save|view)/([a-zA-Z0-9]+)$")
+var validPath = regexp.MustCompile("^/(edit|save|view|[a-zA-Z0-9]+)/*([a-zA-Z0-9]+)*$")
 
 func getTitle(url string) (string, error) {
 	match := validPath.FindStringSubmatch(url)
 	if match == nil {
 		return "", errors.New("Invalid page title")
 	}
-	return match[2], nil
+	title := match[2]
+	if len(match[2]) == 0 {
+		title = match[1]
+	}
+	return title, nil
 }
 
 type Page struct {
@@ -74,6 +78,10 @@ func saveHandler(w http.ResponseWriter, r *http.Request, title string) {
 	http.Redirect(w, r, "/view/"+title, http.StatusFound)
 }
 
+func rootHandler(w http.ResponseWriter, r *http.Request, title string) {
+	http.Redirect(w, r, "/view/"+title, http.StatusFound)
+}
+
 func makeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		Title, err := getTitle(r.URL.Path)
@@ -91,10 +99,11 @@ func main() {
 	page2, _ := loadPage("TestPage")
 	fmt.Println(string(page2.Body))
 
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	/*http.HandleFunc("/", makeHandler(func(w http.ResponseWriter, r *http.Request, title string) {
 		http.Redirect(w, r, "/view/"+title, http.StatusFound)
-	})
+	}))*/
 
+	http.HandleFunc("/", makeHandler(rootHandler))
 	http.HandleFunc("/view/", makeHandler(viewHandler))
 	http.HandleFunc("/edit/", makeHandler(editHandler))
 	http.HandleFunc("/save/", makeHandler(saveHandler))
